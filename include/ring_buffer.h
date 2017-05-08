@@ -14,10 +14,12 @@
 /***************************************************************************************************************************************************/
 struct ring_buffer
 {
-    uint8_t *buffer;
+    uint8_t *start_of_buffer;
+    uint8_t *end_of_buffer;
     size_t size;
     uint8_t *read_ptr;
     uint8_t *write_ptr;
+    uint32_t flags;
 };
 
 /***************************************************************************************************************************************************/
@@ -45,8 +47,8 @@ int ring_buffer_create(uint8_t *buffer, size_t size, struct ring_buffer *rb);
 *
 * \param [in] rb  ring-buffer object
 * \param [in] data  byte-array
-* \param [in] size  size of the buffer
-* \param [out] bytes_wrote  size of bytes wrote to buffer
+* \param [in] len  len of the buffer
+* \param [out] bytes_wrote  len of bytes wrote to buffer
 *
 * \return int  returns status
 * \verbatim
@@ -54,7 +56,7 @@ int ring_buffer_create(uint8_t *buffer, size_t size, struct ring_buffer *rb);
     0 - if successfully
   \endverbatim
 */
-int ring_buffer_write(struct ring_buffer *rb, const uint8_t *data, size_t size, uint32_t *bytes_wrote);
+int ring_buffer_write(struct ring_buffer *rb, const uint8_t *data, size_t len, uint32_t *bytes_wrote);
 
 
 /**
@@ -62,8 +64,8 @@ int ring_buffer_write(struct ring_buffer *rb, const uint8_t *data, size_t size, 
 *
 * \param [in] rb  ring-buffer object
 * \param [in] data  byte-array
-* \param [in] size  size of the buffer
-* \param [out] bytes_read  size of bytes read to buffer
+* \param [in] len  len of the buffer
+* \param [out] bytes_read  len of bytes read to buffer
 *
 * \return int  returns status
 * \verbatim
@@ -71,7 +73,7 @@ int ring_buffer_write(struct ring_buffer *rb, const uint8_t *data, size_t size, 
     0 - if successfully
   \endverbatim
 */
-int ring_buffer_read(struct ring_buffer *rb, uint8_t *data, size_t size, uint32_t *bytes_read);
+int ring_buffer_read(struct ring_buffer *rb, uint8_t *data, size_t len, uint32_t *bytes_read);
 /*@}*/
 //  Local Variables:
 //    mode: c++

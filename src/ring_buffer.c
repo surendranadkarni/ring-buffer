@@ -1,9 +1,9 @@
 /*
-    Header for ring buffer
+    Module for ring buffer
     Copyright (C) {{ 2017 }} {{ Surendra Nadkarni suren.nadkarni@gmail.com }}
 
     All rights reserved.
-    Please check LICENSE file for details
+    Please check LICENSE file for details. Refered Stuart Cording's code.
 */
 
 /***************************************************************************************************************************************************/
@@ -18,6 +18,11 @@
 //                                    LOCAL DEFINITION
 /***************************************************************************************************************************************************/
 #define MIN(a,b) ((a)<(b)?(a):(b))
+#define RB_EMPTY (0x01)
+#define RB_FULL (0x01<<31)
+
+#define SET_FLAG(flags, flag) do{ flags |= flag;} while(0)
+#define RESET_FLAG(flags, flag) do{ flags &= ~flag;} while(0)
 
 
 /***************************************************************************************************************************************************/
@@ -41,9 +46,12 @@ int ring_buffer_create(uint8_t *buffer, size_t size, struct ring_buffer *rb)
     {
         return -1;
     }
-    rb->buffer = buffer;
+    rb->start_of_buffer = buffer;
+    rb->end_of_buffer = rb->start_of_buffer + size - 1;
     rb->size = size;
     rb->write_ptr = rb->read_ptr = buffer;
+    rb->flags = 0;
+    SET_FLAG(rb->flags, RB_EMPTY);
     return 0;
 }
 
@@ -54,40 +62,45 @@ int ring_buffer_create(uint8_t *buffer, size_t size, struct ring_buffer *rb)
 
     \overview   pseudocode-
         \verbatim
-
-          check if rb is not null
-          if there is sufficient space to write then
-            write complete
-          else
-            write till end and then wrap the wrt ptr and write remaining
-
+          write byte by byte until read_ptr equals write_ptr
+          code may wrap the write pointer if it reaches end_of_buffer
         \endverbatim
 */
-int ring_buffer_write(struct ring_buffer *rb, const uint8_t *data, size_t len, uint32_t *bytes_wrote)
+int ring_buffer_write(struct ring_buffer *rb, const uint8_t *data, size_t len, uint32_t *bytes_written)
 {
-    if(rb == NULL)
-        return -1;
-    size_t contiguous_space_available = (rb->buffer + rb->size) - rb->write_ptr;
+    int cnt = 0;
 
-    if(contiguous_space_available > len)
+    if(rb == NULL) return -1;
+
+    if(rb->flags & RB_FULL)
     {
-        memcpy(rb->write_ptr, data, len);
-        *bytes_wrote = len;
-        rb->write_ptr = rb->write_ptr + len;
+        *bytes_written = cnt;
+        return 0;
     }
-    else if (contiguous_space_available == len)
+
+    while (!(rb->flags & RB_FULL))
     {
-        memcpy(rb->write_ptr, data, contiguous_space_available);
-        rb->write_ptr = rb->buffer;
-        *bytes_wrote = len;
+        *rb->write_ptr = *data;
+        rb->write_ptr++;
+        data++;
+        cnt++;
+
+        if (rb->write_ptr > rb->end_of_buffer)
+        {
+            rb->write_ptr = rb->start_of_buffer;
+        }
+
+        if(rb->write_ptr == rb->read_ptr)
+        {
+            SET_FLAG(rb->flags, RB_FULL);
+        }
+        if(cnt == len)
+        {
+            break;
+        }
     }
-    else if (contiguous_space_available < len)
-    {
-        memcpy(rb->write_ptr, data, contiguous_space_available);
-        memcpy(rb->buffer, data+contiguous_space_available, len-contiguous_space_available);
-        rb->write_ptr = rb->buffer + len-contiguous_space_available;
-        *bytes_wrote = len;
-    }
+    *bytes_written = cnt;
+    RESET_FLAG(rb->flags, RB_EMPTY);
     return 0;
 }
 
@@ -97,49 +110,45 @@ int ring_buffer_write(struct ring_buffer *rb, const uint8_t *data, size_t len, u
 
     \overview   pseudocode-
         \verbatim
-
-          check if rb is not null
-          if rd_ptr > wr_ptr then no case of contiguous read
-            read till end
-            and then till wr ptr
-          else
-            read till wr_ptr
-
+            read byte by byte until buffer becomes empty
+            sometimes need to wrap if reaches end_of_buffer
         \endverbatim
 */
 int ring_buffer_read(struct ring_buffer *rb, uint8_t *data, size_t len, uint32_t *bytes_read)
 {
-    if(rb == NULL)
-        return -1;
+    int cnt = 0;
 
-    if(rb->read_ptr < rb->write_ptr)
+    if(rb == NULL) return -1;
+
+    if(rb->flags & RB_EMPTY)
     {
-        size_t contiguous_space_available = rb->write_ptr - rb->read_ptr;
-        size_t read_len = MIN(len, contiguous_space_available);
-        memcpy(data, rb->read_ptr, read_len);
-        rb->read_ptr = rb->read_ptr + len;
-        *bytes_read = len;
+        *bytes_read = 0;
+        return 0;
     }
-    else
+
+    while(!(rb->flags & RB_EMPTY))
     {
-        size_t contiguous_space_available = (rb->buffer + rb->size) - rb->read_ptr;
-        if(contiguous_space_available > len)
+        *data = *rb->read_ptr;
+        rb->read_ptr++;
+        data++;
+        cnt++;
+
+        if (rb->read_ptr > rb->end_of_buffer)
         {
-             memcpy(data, rb->read_ptr, contiguous_space_available);
-             rb->read_ptr = rb->read_ptr + len;
+            rb->read_ptr = rb->start_of_buffer;
         }
-        else if(contiguous_space_available == len)
+
+        if(rb->write_ptr == rb->read_ptr)
         {
-             memcpy(data, rb->read_ptr, len);
-             rb->read_ptr = rb->buffer;
+            SET_FLAG(rb->flags, RB_EMPTY);
         }
-        else if(contiguous_space_available < len)
+
+        if(cnt == len)
         {
-             memcpy(data, rb->read_ptr, contiguous_space_available);
-             memcpy(data+contiguous_space_available, rb->buffer, len-contiguous_space_available);
-             rb->read_ptr = rb->buffer + len-contiguous_space_available;
+            break;
         }
-        *bytes_read = len;
     }
+    *bytes_read = cnt;
+    RESET_FLAG(rb->flags, RB_FULL);
     return 0;
 }
