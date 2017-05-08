@@ -22,16 +22,19 @@ int main()
     retval = ring_buffer_read(rb, data2, 3, &tmp);
     assert(retval == 0);
     printf("read %d bytes\n", tmp);
+
     for(i = 0; i < tmp; i++) printf("%d ",data2[i]);
     printf("\n");
 
     retval = ring_buffer_write(rb, data1+10, 10, &tmp);
     assert(retval == 0);
+    assert(tmp == 8);
     printf("wrote %d bytes\n", tmp);
 
     tmp = 0;
     retval = ring_buffer_read(rb, data2, 7, &tmp);
     assert(retval == 0);
+    assert(tmp == 7);
     printf("read %d bytes\n", tmp);
     for(i = 0; i < tmp; i++) printf("%d ",data2[i]);
     printf("\n");
@@ -39,7 +42,16 @@ int main()
     tmp = 0;
     retval = ring_buffer_read(rb, data2, 3, &tmp);
     assert(retval == 0);
+    assert(tmp == 3);
     printf("\nread %d bytes\n", tmp);
+    for(i = 0; i < tmp; i++) printf("%d ",data2[i]);
+    printf("\n");
+
+    tmp = 0;
+    retval = ring_buffer_read(rb, data2, 3, &tmp);
+    assert(retval == 0);
+    assert(tmp == 0);
+    printf("\nread %d bytes as buffer is empty\n", tmp);
     for(i = 0; i < tmp; i++) printf("%d ",data2[i]);
     printf("\n");
 
