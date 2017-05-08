@@ -12,7 +12,13 @@
 /***************************************************************************************************************************************************/
 //                                                                   DEFINITIONS
 /***************************************************************************************************************************************************/
-struct ring_buffer;
+struct ring_buffer
+{
+    uint8_t *buffer;
+    size_t size;
+    uint8_t *read_ptr;
+    uint8_t *write_ptr;
+};
 
 /***************************************************************************************************************************************************/
 //                                                                 APIs
@@ -23,14 +29,15 @@ struct ring_buffer;
 *
 * \param [in] buffer  byte-array
 * \param [in] size  size of the buffer
+* \param [out] rb   pointer to ring-buffer object. Application will hold the object
 *
-* \return ring_buffer  returns ring_buffer object
+* \return int  returns error status
 * \verbatim
-    NULL - if not successful
-    non_NULL - if successful
+    error code - if not successful
+    0 - if successful
   \endverbatim
 */
-struct ring_buffer* ring_buffer_new(uint8_t *buffer, size_t size);
+int ring_buffer_create(uint8_t *buffer, size_t size, struct ring_buffer *rb);
 
 
 /**
