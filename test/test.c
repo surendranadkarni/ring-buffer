@@ -39,11 +39,21 @@ int main()
     for(i = 0; i < tmp; i++) printf("%d ",data2[i]);
     printf("\n");
 
+    /*dummy read*/
+    tmp = 0;
+    retval = ring_buffer_dummy_read(rb, data2, 3, &tmp);
+    assert(retval == 0);
+    assert(tmp == 3);
+    printf("\n dummy read %d bytes\n", tmp);
+    for(i = 0; i < tmp; i++) printf("%d ",data2[i]);
+    for(i = 0; i < tmp; i++) data2[i] = 0;
+    printf("\n");
+
     tmp = 0;
     retval = ring_buffer_read(rb, data2, 3, &tmp);
     assert(retval == 0);
     assert(tmp == 3);
-    printf("\nread %d bytes\n", tmp);
+    printf("\n read %d bytes\n", tmp);
     for(i = 0; i < tmp; i++) printf("%d ",data2[i]);
     printf("\n");
 

@@ -152,3 +152,52 @@ int ring_buffer_read(struct ring_buffer *rb, uint8_t *data, size_t len, uint32_t
     RESET_FLAG(rb->flags, RB_FULL);
     return 0;
 }
+
+/**
+    ring_buffer_dummy_read()-
+
+    \overview   pseudocode-
+        \verbatim
+            read byte by byte until buffer becomes empty
+            sometimes need to wrap if reaches end_of_buffer
+        \endverbatim
+*/
+int ring_buffer_dummy_read(struct ring_buffer *rb, uint8_t *data, size_t len, uint32_t *bytes_read)
+{
+    int cnt = 0;
+    uint8_t *dummy_rd_ptr = rb->read_ptr;
+    uint32_t dummy_flag = rb->flags;
+
+    if(rb == NULL) return -1;
+
+    if(rb->flags & RB_EMPTY)
+    {
+        *bytes_read = 0;
+        return 0;
+    }
+
+    while(!(dummy_flag & RB_EMPTY))
+    {
+        *data = *dummy_rd_ptr;
+        dummy_rd_ptr++;
+        data++;
+        cnt++;
+
+        if (dummy_rd_ptr > rb->end_of_buffer)
+        {
+            dummy_rd_ptr = rb->start_of_buffer;
+        }
+
+        if(rb->write_ptr == dummy_rd_ptr)
+        {
+            SET_FLAG(dummy_flag, RB_EMPTY);
+        }
+
+        if(cnt == len)
+        {
+            break;
+        }
+    }
+    *bytes_read = cnt;
+    return 0;
+}

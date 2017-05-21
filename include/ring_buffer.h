@@ -52,8 +52,8 @@ int ring_buffer_create(uint8_t *buffer, size_t size, struct ring_buffer *rb);
 *
 * \return int  returns status
 * \verbatim
-    error code - if not successfully
-    0 - if successfully
+    error code - if not successful
+    0 - if successful
   \endverbatim
 */
 int ring_buffer_write(struct ring_buffer *rb, const uint8_t *data, size_t len, uint32_t *bytes_wrote);
@@ -69,11 +69,28 @@ int ring_buffer_write(struct ring_buffer *rb, const uint8_t *data, size_t len, u
 *
 * \return int  returns status
 * \verbatim
-    error code - if not successfully
-    0 - if successfully
+    error code - if not successful
+    0 - if successful
   \endverbatim
 */
 int ring_buffer_read(struct ring_buffer *rb, uint8_t *data, size_t len, uint32_t *bytes_read);
+
+/**
+* \brief This api is used to dummy read data from ring buffer.
+*        This operation will nor increment the read pointer
+*
+* \param [in] rb  ring-buffer object
+* \param [in] data  byte-array
+* \param [in] len  len of the buffer
+* \param [out] bytes_read  len of bytes read to buffer
+*
+* \return int  returns status
+* \verbatim
+    error code - if not successful
+    0 - if successful
+  \endverbatim
+*/
+int ring_buffer_dummy_read(struct ring_buffer *rb, uint8_t *data, size_t len, uint32_t *bytes_read);
 /*@}*/
 //  Local Variables:
 //    mode: c++
